@@ -1,54 +1,113 @@
 #include "binary_trees.h"
 
-size_t depth(const binary_tree_t *tree);
+/**
+ * struct node_s - singly linked list
+ * @node: const binary tree node
+ * @next: points to the next node
+ */
+typedef struct node_s
+{
+	const binary_tree_t *node;
+	struct node_s *next;
+} ll;
+
+ll *append(ll *head, const binary_tree_t *btnode);
+void free_list(ll *head);
+ll *get_children(ll *head, const binary_tree_t *parent);
+void levels_rec(ll *head, void (*func)(int));
 
 /**
- * binary_trees_ancestor - Finds the lowest common ancestor of two nodes.
- * @first: Pointer to the first node.
- * @second: Pointer to the second node.
- *
- * Return: If no common ancestors return NULL, else return common ancestor.
+ * binary_tree_levelorder - Goes through a binary tree
+ *                          using level-order traversal.
+ * @tree: Pointer to the root node of the tree to traverse.
+ * @func: Pointer to a function to call for each node.
  */
-binary_tree_t *binary_trees_ancestor(const binary_tree_t *first,
-		const binary_tree_t *second)
+void binary_tree_levelorder(const binary_tree_t *tree, void (*func)(int))
 {
-	size_t first_depth, second_depth;
+	ll *children = NULL;
 
-	if (first == NULL || second == NULL)
-		return (NULL);
-	if (first == second)
-		return ((binary_tree_t *)first);
-	if (first->parent == second->parent)
-		return ((binary_tree_t *)first->parent);
-	if (first == second->parent)
-		return ((binary_tree_t *)first);
-	if (first->parent == second)
-		return ((binary_tree_t *)second);
+	func(tree->n);
+	children = get_children(children, tree);
+	levels_rec(children, func);
 
-	for (first_depth = depth(first); first_depth > 1; first_depth--)
-		first = first->parent;
-	for (second_depth = depth(second); second_depth > 1; second_depth--)
-		second = second->parent;
-
-	if (first == second)
-		return ((binary_tree_t *)first);
-	if (first->parent == second->parent)
-		return ((binary_tree_t *)first->parent);
-	if (first == second->parent)
-		return ((binary_tree_t *)first);
-	if (first->parent == second)
-		return ((binary_tree_t *)second);
-	else
-		return (NULL);
+	free_list(children);
 }
 
 /**
- * depth - Measures the depth of a node in a binary tree.
- * @tree: A pointer to the node to measure the depth.
- *
- * Return: If tree is NULL, your function must return 0, else return the depth.
+ * levels_rec - Calls func on all nodes at each level.
+ * @head: Pointer to head of linked list with nodes at one level.
+ * @func: Pointer to a function to call for each node.
  */
-size_t depth(const binary_tree_t *tree)
+void levels_rec(ll *head, void (*func)(int))
 {
-	return ((tree->parent != NULL) ? 1 + depth(tree->parent) : 0);
+	ll *children = NULL, *curr = NULL;
+
+	if (!head)
+		return;
+	for (curr = head; curr != NULL; curr = curr->next)
+	{
+		func(curr->node->n);
+		children = get_children(children, curr->node);
+	}
+	levels_rec(children, func);
+	free_list(children);
+}
+
+/**
+ * get_children - appends children of parent to linked list.
+ * @head: Pointer to head of linked list where children will be appended.
+ * @parent: Pointer to node whose children we want to append.
+ * Return: Pointer to head of linked list of children.
+ */
+ll *get_children(ll *head, const binary_tree_t *parent)
+{
+	if (parent->left)
+		head = append(head, parent->left);
+	if (parent->right)
+		head = append(head, parent->right);
+	return (head);
+}
+
+/**
+ * append - adds a new node at the end of a linkedlist
+ * @head: pointer to head of linked list
+ * @btnode: const binary tree node to append
+ * Return: pointer to head, or NULL on failure
+ */
+ll *append(ll *head, const binary_tree_t *btnode)
+{
+	ll *new = NULL, *last = NULL;
+
+	new = malloc(sizeof(*new));
+	if (new)
+	{
+		new->node = btnode;
+		new->next = NULL;
+		if (!head)
+			head = new;
+		else
+		{
+			last = head;
+			while (last->next)
+				last = last->next;
+			last->next = new;
+		}
+	}
+	return (head);
+}
+
+/**
+ * free_list - frees all the nodes in a linked list
+ * @head: pointer to the head of list_t linked list
+ */
+void free_list(ll *head)
+{
+	ll *ptr = NULL;
+
+	while (head)
+	{
+		ptr = head->next;
+		free(head);
+		head = ptr;
+	}
 }
